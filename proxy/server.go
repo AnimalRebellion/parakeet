@@ -60,6 +60,7 @@ func (s *Server) Send(topic string, payload interface{}) error {
 	//fmt.Fprintf(w, "Task scheduled in %+v\nResponse: %v\n", duration, string(response.Data))
 }
 
+//TODO need to close subscription
 func (s *Server) Receive(topic string) error {
 	var err error
 	_, err = s.nc.Subscribe(topic, func(m *nats.Msg) {
@@ -67,10 +68,12 @@ func (s *Server) Receive(topic string) error {
 		err = json.Unmarshal(m.Data, &person)
 		if err != nil {
 			err = fmt.Errorf("Error deserialising: %w", err)
-			log.Println(err)
 		}
 		log.Printf("Message received on: %s - %s", m.Subject, person.Name)
 		err = s.nc.Publish(m.Reply, []byte("Success!!"))
 	})
-	return fmt.Errorf("Error creating subscription: %w", err)
+	if err != nil {
+		return fmt.Errorf("Error creating subscription: %w", err)
+	}
+	return nil
 }
